@@ -1,26 +1,16 @@
 package nextstep.subway.test.acceptance;
 
 import io.restassured.RestAssured;
-import io.restassured.response.ExtractableResponse;
-import io.restassured.response.Response;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
-import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 
 import java.util.HashMap;
-import java.util.List;
 import java.util.Map;
 
-import static nextstep.subway.test.acceptance.LineTestMethod.지하철노선_단일조회;
-import static nextstep.subway.test.acceptance.LineTestMethod.지하철노선_목록조회;
-import static nextstep.subway.test.acceptance.LineTestMethod.지하철노선_삭제;
-import static nextstep.subway.test.acceptance.LineTestMethod.지하철노선_생성;
-import static nextstep.subway.test.acceptance.LineTestMethod.지하철노선_수정;
-import static nextstep.subway.test.acceptance.StationTestMethod.지하철역_생성;
-import static org.assertj.core.api.Assertions.assertThat;
-import static org.junit.jupiter.api.Assertions.assertAll;
+import static nextstep.subway.test.acceptance.StationTestMethod.*;
+import static nextstep.subway.test.acceptance.LineTestMethod.*;
 
 /**
  * @author a1101466 on 2022/07/10
@@ -29,9 +19,23 @@ import static org.junit.jupiter.api.Assertions.assertAll;
  */
 public class SectionAcceptanceTest extends AcceptanceTest{
 
+    public String 파랑선_시작ID;
+    public String 파랑선_종착ID;
+    public String 초록선_시작ID;
+    public String 초록선_종착ID;
+
+    public Long 초록선_라인ID;
+
     @BeforeEach
     public void SectionTestSetUp() {
+        파랑선_시작ID = 지하철역_생성("구일역").jsonPath().getString("id");
+        파랑선_종착ID = 지하철역_생성("구로역").jsonPath().getString("id");;
+        초록선_시작ID = 지하철역_생성("신도립역").jsonPath().getString("id");;
+        초록선_종착ID = 지하철역_생성("문래역").jsonPath().getString("id");;
 
+        지하철노선_생성("파랑선", 파랑선_시작ID, 파랑선_종착ID, "blue", "10");
+        초록선_라인ID = 지하철노선_생성("초록선", 초록선_시작ID, 초록선_종착ID, "green", "10")
+                .jsonPath().getLong("id");
     }
     /**
      * 지하철 노선에 구간을 등록하는 기능을 구현.
@@ -43,9 +47,9 @@ public class SectionAcceptanceTest extends AcceptanceTest{
     @DisplayName("지하철노선을 생성한다")
     void createLine(){
         Map<String, String> params = new HashMap<>();
-
-        params.put("downStationId"  , "4");
-        params.put("upStationId"    , "2");
+        String 새로운구간_종료ID = 지하철역_생성("합정역").jsonPath().getString("id");;
+        params.put("upStationId"    , 초록선_종착ID);
+        params.put("downStationId"  , 새로운구간_종료ID);
         params.put("distance"       , "10");
 
         RestAssured
@@ -53,10 +57,10 @@ public class SectionAcceptanceTest extends AcceptanceTest{
                 .body(params)
                 .contentType(MediaType.APPLICATION_JSON_VALUE)
                 .when()
-                .post("/lines/1/sections")
+                .post("/lines/{lineId}/sections", 초록선_라인ID)
                 .then().log().all()
                 .extract();
-
+        지하철노선_목록조회();
     }
 
     /**

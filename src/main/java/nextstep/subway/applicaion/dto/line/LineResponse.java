@@ -1,9 +1,9 @@
-package nextstep.subway.applicaion.dto;
+package nextstep.subway.applicaion.dto.line;
 
 import lombok.Getter;
 import lombok.Setter;
+import nextstep.subway.applicaion.dto.station.StationResponse;
 import nextstep.subway.domain.Line;
-import nextstep.subway.domain.Station;
 
 import java.util.List;
 

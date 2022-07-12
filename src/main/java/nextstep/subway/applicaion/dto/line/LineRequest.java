@@ -1,10 +1,8 @@
-package nextstep.subway.applicaion.dto;
+package nextstep.subway.applicaion.dto.line;
 
 import lombok.Getter;
-import lombok.Setter;
 
 @Getter
-@Setter
 public class LineRequest {
     private String name;
     private String color;

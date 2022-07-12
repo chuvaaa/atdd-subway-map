@@ -1,18 +1,19 @@
 package nextstep.subway.applicaion;
 
-import nextstep.subway.applicaion.dto.LineRequest;
-import nextstep.subway.applicaion.dto.LineResponse;
-import nextstep.subway.applicaion.dto.StationResponse;
+import nextstep.subway.applicaion.dto.line.LineRequest;
+import nextstep.subway.applicaion.dto.line.LineResponse;
+import nextstep.subway.applicaion.dto.section.SectionRequest;
+import nextstep.subway.applicaion.dto.section.SectionResponse;
+import nextstep.subway.applicaion.dto.station.StationResponse;
 import nextstep.subway.domain.Line;
 import nextstep.subway.domain.LineRepository;
+import nextstep.subway.domain.Section;
+import nextstep.subway.domain.SectionRepository;
 import nextstep.subway.domain.Station;
 import nextstep.subway.domain.StationRepository;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
-import org.springframework.util.StringUtils;
 
-import java.util.ArrayList;
 import java.util.List;
 import java.util.NoSuchElementException;
 import java.util.stream.Collectors;
@@ -20,19 +21,26 @@ import java.util.stream.Collectors;
 @Service
 @Transactional
 public class LineService {
-    private LineRepository lineRepository;
-    private StationRepository stationRepository;
+    private final LineRepository lineRepository;
+    private final SectionRepository sectionRepository;
+    private final StationRepository stationRepository;
 
-    public LineService(LineRepository lineRepository, StationRepository stationRepository) {
+    public LineService(LineRepository lineRepository, SectionRepository sectionRepository, StationRepository stationRepository) {
         this.lineRepository = lineRepository;
+        this.sectionRepository = sectionRepository;
         this.stationRepository = stationRepository;
     }
 
     public LineResponse saveLine(LineRequest lineRequest) {
         Line saveLine = lineRepository.save(
-                new Line(lineRequest.getName(), lineRequest.getColor(), lineRequest.getUpStationId(),
-                        lineRequest.getDownStationId(), lineRequest.getDistance())
+                new Line(lineRequest.getName(), lineRequest.getColor(),
+                        new Section(saveLine, lineRequest.getUpStationId(), lineRequest.getDownStationId(), lineRequest.getDistance()))
         );
+        List<Section> sections = sectionRepository.findByLineId(saveLine.getId());
+        sections.forEach(System.out::println);
+        /*saveSection(saveLine.getId(), new SectionRequest(saveLine.getDownStationId(), saveLine.getUpStationId()
+                    , saveLine.getDistance()));*/
+
         return LineResponse.of(saveLine, findAllStationUsingLine(saveLine));
     }
 
@@ -70,5 +78,19 @@ public class LineService {
                 .stream()
                 .map(station -> StationResponse.of(station))
                 .collect(Collectors.toList());
+    }
+
+    public void saveSection(Long lineId, SectionRequest sectionRequest){
+        Line line = lineRepository.findById(lineId)
+                .orElseThrow(() -> new NoSuchElementException("노선을 찾을 수 없습니다."));
+
+        line.addSection(new Section(line, sectionRequest.getUpStationId(), sectionRequest.getDownStationId()
+                                    , sectionRequest.getDistance()));
+
+    }
+
+    public SectionResponse findSectionById(long sectionId) {
+        return SectionResponse.of(sectionRepository.findById(sectionId)
+                .orElseThrow(() -> new NoSuchElementException("해당 구간을 찾을수 없습니다.")));
     }
 }
